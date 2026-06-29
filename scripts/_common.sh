@@ -24,17 +24,20 @@ source_ref="main"
 _meshmonitor_fetch_source() {
     local dest="$1"
 
+    # Ensure the app user owns the destination directory before running git as that user.
+    chown -R "$app:" "$dest"
+
     if [ -d "$dest/.git" ]; then
-        git -C "$dest" remote set-url origin "$source_repo"
-        git -C "$dest" fetch --tags --force origin
+        ynh_exec_as_app git -C "$dest" remote set-url origin "$source_repo"
+        ynh_exec_as_app git -C "$dest" fetch --tags --force origin
     else
         # install_dir is provisioned empty; clone into it.
-        git clone "$source_repo" "$dest"
+        ynh_exec_as_app git clone "$source_repo" "$dest"
     fi
 
-    git -C "$dest" checkout --force "$source_ref"
-    git -C "$dest" submodule sync --recursive
-    git -C "$dest" submodule update --init --recursive --force
+    ynh_exec_as_app git -C "$dest" checkout --force "$source_ref"
+    ynh_exec_as_app git -C "$dest" submodule sync --recursive
+    ynh_exec_as_app git -C "$dest" submodule update --init --recursive --force
 }
 
 # Build the frontend and backend as the app user, using the helper-managed Node.js.
