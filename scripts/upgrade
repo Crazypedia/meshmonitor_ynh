@@ -1,0 +1,95 @@
+#!/bin/bash
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# STOP SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Stopping $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="stop"
+
+#=================================================
+# ENSURE BACKWARD COMPATIBILITY
+#=================================================
+
+# base_url was introduced by this package; recompute it if missing.
+if [ -z "${base_url:-}" ]; then
+    if [ "$path" == "/" ]; then
+        base_url=""
+    else
+        base_url="${path%/}"
+    fi
+    ynh_app_setting_set --key=base_url --value="$base_url"
+fi
+
+if [ -z "${session_secret:-}" ]; then
+    session_secret=$(ynh_string_random --length=48)
+    ynh_app_setting_set --key=session_secret --value="$session_secret"
+fi
+
+#=================================================
+# UPGRADE NODEJS
+#=================================================
+ynh_script_progression "Upgrading Node.js..."
+
+ynh_nodejs_install
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+ynh_script_progression "Updating MeshMonitor source ($source_ref)..."
+
+_meshmonitor_fetch_source "$install_dir"
+
+chown -R "$app:www-data" "$install_dir"
+
+#=================================================
+# REGENERATE CONFIGURATION
+#=================================================
+ynh_script_progression "Updating $app's configuration..."
+
+ynh_config_add --template=".env" --destination="$install_dir/.env"
+chmod 600 "$install_dir/.env"
+chown "$app:$app" "$install_dir/.env"
+
+#=================================================
+# REBUILD THE APPLICATION
+#=================================================
+ynh_script_progression "Rebuilding MeshMonitor (this can take several minutes)..."
+
+_meshmonitor_build "$install_dir"
+
+#=================================================
+# REAPPLY SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Upgrading system configurations related to $app..."
+
+mkdir -p "/var/log/$app"
+chown -R "$app:$app" "/var/log/$app"
+
+ynh_config_add_systemd
+
+yunohost service add "$app" --description="MeshMonitor Meshtastic dashboard" --log="/var/log/$app/$app.log"
+
+ynh_config_add_logrotate
+
+ynh_config_add_nginx
+
+#=================================================
+# START SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Starting $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="start"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Upgrade of $app completed"

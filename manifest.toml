@@ -1,0 +1,71 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/main/schemas/manifest.v2.schema.json
+
+packaging_format = 2
+
+id = "meshmonitor"
+name = "MeshMonitor"
+description.en = "Web dashboard for monitoring and managing a Meshtastic mesh network"
+description.fr = "Tableau de bord web pour surveiller et gérer un réseau maillé Meshtastic"
+
+version = "4.12.1~ynh1"
+
+maintainers = ["Crazypedia"]
+
+[upstream]
+license = "BSD-3-Clause"
+website = "https://meshmonitor.org"
+admindoc = "https://github.com/yeraze/meshmonitor/blob/main/docs/deployment/DEPLOYMENT_GUIDE.md"
+userdoc = "https://github.com/yeraze/meshmonitor/blob/main/docs/getting-started.md"
+code = "https://github.com/yeraze/meshmonitor"
+
+[integration]
+yunohost = ">= 12.0.0"
+helpers_version = "2.1"
+architectures = ["amd64", "arm64"]
+multi_instance = true
+ldap = "false"
+sso = "false"
+# ~1G+ free during the npm build (native modules: bcrypt, better-sqlite3, re2)
+disk = "1G"
+ram.build = "2G"
+ram.runtime = "512M"
+
+[install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/meshmonitor"
+
+    [install.init_main_permission]
+    help.en = "MeshMonitor has its own admin login (default admin/changeme). 'visitors' makes the dashboard reachable by anyone; the app still enforces its own authentication."
+    type = "group"
+    default = "visitors"
+
+    [install.node_ip]
+    ask.en = "IP address (or hostname) of your Meshtastic node"
+    ask.fr = "Adresse IP (ou nom d'hôte) de votre nœud Meshtastic"
+    help.en = "MeshMonitor connects to the node over TCP. The node must be reachable from this server."
+    type = "string"
+    default = "192.168.1.100"
+
+    [install.node_port]
+    ask.en = "Meshtastic node TCP port"
+    type = "string"
+    default = "4403"
+
+[resources]
+    [resources.system_user]
+
+    [resources.install_dir]
+
+    [resources.data_dir]
+
+    [resources.permissions]
+    main.url = "/"
+
+    [resources.ports]
+
+    [resources.apt]
+    packages = "git, build-essential, python3, python3-venv, ca-certificates"

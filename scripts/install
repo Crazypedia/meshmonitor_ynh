@@ -1,0 +1,84 @@
+#!/bin/bash
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# INITIALIZE AND STORE SETTINGS
+#=================================================
+
+# Subpath for the app's BASE_URL ("" when installed at the domain root).
+if [ "$path" == "/" ]; then
+    base_url=""
+else
+    base_url="${path%/}"
+fi
+ynh_app_setting_set --key=base_url --value="$base_url"
+
+session_secret=$(ynh_string_random --length=48)
+ynh_app_setting_set --key=session_secret --value="$session_secret"
+
+#=================================================
+# INSTALL NODEJS
+#=================================================
+ynh_script_progression "Installing Node.js..."
+
+ynh_nodejs_install
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+ynh_script_progression "Cloning MeshMonitor source ($source_ref) with submodules..."
+
+_meshmonitor_fetch_source "$install_dir"
+
+chown -R "$app:www-data" "$install_dir"
+
+#=================================================
+# APP INITIAL CONFIGURATION
+#=================================================
+ynh_script_progression "Adding $app's configuration..."
+
+ynh_config_add --template=".env" --destination="$install_dir/.env"
+chmod 600 "$install_dir/.env"
+chown "$app:$app" "$install_dir/.env"
+
+#=================================================
+# BUILD THE APPLICATION
+#=================================================
+ynh_script_progression "Building MeshMonitor (this can take several minutes)..."
+
+_meshmonitor_build "$install_dir"
+
+#=================================================
+# SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Adding system configurations related to $app..."
+
+mkdir -p "/var/log/$app"
+chown -R "$app:$app" "/var/log/$app"
+
+ynh_config_add_systemd
+
+yunohost service add "$app" --description="MeshMonitor Meshtastic dashboard" --log="/var/log/$app/$app.log"
+
+ynh_config_add_logrotate
+
+ynh_config_add_nginx
+
+#=================================================
+# START SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Starting $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="start"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Installation of $app completed. Default login: admin / changeme — change it immediately."
