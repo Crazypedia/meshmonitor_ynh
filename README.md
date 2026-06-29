@@ -19,7 +19,13 @@ This package builds and runs MeshMonitor directly on Node.js (no Docker), follow
 ## Important notes
 
 - **Meshtastic node reachability** — MeshMonitor needs network access to your node's TCP port (default 4403). The node must be reachable from the YunoHost server. BLE/serial connections are not supported by this deployment.
-- **Authentication** — installs with the YunoHost permission set to `visitors`; MeshMonitor enforces its own login. Default credentials are `admin` / `changeme` — **change them immediately** after first login.
+- **Authentication (YunoHost SSO)** — installs with the permission set to `all_users`, so MeshMonitor is wired into the YunoHost single sign-on: anyone logged into the portal is **authenticated automatically** (no separate MeshMonitor password). nginx forwards SSOwat's `YNH_USER_EMAIL` as a `Remote-User` header, which MeshMonitor's reverse-proxy auth consumes to auto-provision the account. Users whose email is listed in the **administrator email(s)** install question get admin rights; everyone else gets read-only access. Roles can be adjusted later with:
+  ```bash
+  yunohost app setting meshmonitor admin_email -v "alice@example.com,bob@example.com"
+  yunohost app upgrade meshmonitor   # re-renders .env from the saved settings
+  ```
+  - **Break-glass login** — the built-in `admin` / `changeme` account stays usable for emergencies; **change that password** after first login if you rely on it.
+  - **Disabling SSO** — choosing the `visitors` permission makes the dashboard public and turns SSO off (the app then falls back to its own login). For a tighter setup you may also set `DISABLE_LOCAL_AUTH=true` / `DISABLE_ANONYMOUS=true` in `__INSTALL_DIR__/.env` to require SSO-only access.
 - **Build resources** — the app compiles native modules (`bcrypt`, `better-sqlite3`, `re2`) and a React frontend at install time. Allow ~2 GB RAM and a few minutes for the build.
 - **Subpath installs** — supported via the app's `BASE_URL`; both root (`/`) and subpath (`/meshmonitor`) work.
 

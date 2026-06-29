@@ -22,6 +22,9 @@ ynh_app_setting_set --key=base_url --value="$base_url"
 session_secret=$(ynh_string_random --length=48)
 ynh_app_setting_set --key=session_secret --value="$session_secret"
 
+# Admin email(s) for SSO header auth → PROXY_AUTH_ADMIN_EMAILS in .env (optional, may be empty).
+ynh_app_setting_set --key=admin_email --value="${admin_email:-}"
+
 #=================================================
 # INSTALL NODEJS
 #=================================================

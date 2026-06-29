@@ -33,9 +33,19 @@ ynh_script_progression "Removing Node.js..."
 ynh_nodejs_remove
 
 #=================================================
+# REMOVE DATA DIRECTORY
+#=================================================
+ynh_script_progression "Removing the data directory..."
+
+# Wipe the database and all persisted state so a future reinstall starts clean and
+# cannot inherit a stale admin/password or misconfiguration from a past install.
+# (Upgrades never reach this script, so they keep the data intact and migrate it.)
+ynh_safe_rm "$data_dir"
+
+#=================================================
 # END OF SCRIPT
 #=================================================
 
-# The core deprovisions install_dir, data_dir, the system user and the port after this script.
+# The core deprovisions install_dir, the system user and the port after this script.
 
 ynh_script_progression "Removal of $app completed"
