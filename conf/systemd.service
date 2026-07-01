@@ -21,7 +21,11 @@ SyslogIdentifier=__APP__
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=true
+# NOTE: ProtectHome must NOT be enabled. YunoHost's data_dir lives under
+# /home/yunohost.app/__APP__; ProtectHome=true masks /home with an empty tmpfs,
+# hiding the data dir before ReadWritePaths can expose it, which makes the app
+# crash-loop with EACCES creating its SQLite database. ProtectSystem=strict
+# already keeps the rest of /home read-only; ReadWritePaths re-opens the data dir.
 PrivateTmp=true
 ReadWritePaths=__DATA_DIR__ /var/log/__APP__
 
