@@ -24,9 +24,7 @@ helpers_version = "2.1"
 architectures = ["amd64", "arm64"]
 multi_instance = true
 ldap = "false"
-# SSOwat header auth: portal users are auto-logged-in via the YNH_USER_EMAIL header
-# (normalized to Remote-User in nginx.conf), consumed by MeshMonitor's proxy auth.
-sso = "true"
+sso = "false"
 # ~1G+ free during the npm build (native modules: bcrypt, better-sqlite3, re2)
 disk = "1G"
 ram.build = "2G"
@@ -41,17 +39,9 @@ ram.runtime = "512M"
     default = "/meshmonitor"
 
     [install.init_main_permission]
-    help.en = "Who can reach MeshMonitor through the YunoHost SSO. 'all_users' (recommended) gives every YunoHost user single sign-on: SSOwat authenticates them at the portal and MeshMonitor logs them in automatically. Pick a sub-group to restrict access. 'visitors' makes the dashboard public and DISABLES SSO (the app then falls back to its own admin/changeme login)."
+    help.en = "MeshMonitor has its own admin login (default admin/changeme). 'visitors' makes the dashboard reachable by anyone; the app still enforces its own authentication."
     type = "group"
-    default = "all_users"
-
-    [install.admin_email]
-    ask.en = "MeshMonitor administrator email(s)"
-    ask.fr = "Adresse(s) e-mail de l'administrateur de MeshMonitor"
-    help.en = "Comma-separated email address(es) of the YunoHost users who should be MeshMonitor admins. Their SSO login is auto-granted full admin rights; everyone else gets read-only access. Leave empty to manage roles from the built-in admin/changeme account instead."
-    type = "string"
-    optional = true
-    example = "alice@example.com"
+    default = "visitors"
 
     [install.node_ip]
     ask.en = "IP address (or hostname) of your Meshtastic node"
