@@ -33,13 +33,6 @@ if [ -z "${session_secret:-}" ]; then
     ynh_app_setting_set --key=session_secret --value="$session_secret"
 fi
 
-# admin_email (SSO header auth) was introduced later; default to empty so the .env
-# template renders cleanly on installs that predate it.
-if [ -z "${admin_email:-}" ]; then
-    admin_email=""
-    ynh_app_setting_set --key=admin_email --value="$admin_email"
-fi
-
 #=================================================
 # UPGRADE NODEJS
 #=================================================
