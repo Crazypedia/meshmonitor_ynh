@@ -21,7 +21,27 @@ This package builds and runs MeshMonitor directly on Node.js (no Docker), follow
 - **Meshtastic node reachability** — MeshMonitor needs network access to your node's TCP port (default 4403). The node must be reachable from the YunoHost server. BLE/serial connections are not supported by this deployment.
 - **Authentication** — installs with the YunoHost permission set to `visitors`; MeshMonitor enforces its own login. Default credentials are `admin` / `changeme` — **change them immediately** after first login.
 - **Build resources** — the app compiles native modules (`bcrypt`, `better-sqlite3`, `re2`) and a React frontend at install time. Allow ~2 GB RAM and a few minutes for the build.
-- **Subpath installs** — supported via the app's `BASE_URL`; both root (`/`) and subpath (`/meshmonitor`) work.
+- **Subpath installs** — supported via the app's `BASE_URL`; both root (`/`) and subpath (`/meshmonitor`) work. The frontend is always built for `/` and the server rewrites asset paths at runtime, so no rebuild is needed to change the path.
+
+## Networking: which features need a firewall port
+
+Only the main web UI is reachable through YunoHost's nginx. MeshMonitor's other listeners are opt-in and bind their own TCP ports, which the YunoHost firewall blocks by default:
+
+| Feature | Direction | Port | Needs firewall change |
+|---|---|---|---|
+| Web UI | inbound via nginx | — | No (handled by YunoHost) |
+| Meshtastic node connection | outbound | 4403 | No |
+| **MQTT bridge** (client → upstream broker) | outbound | — | **No** |
+| **MQTT broker** (embedded, devices → MeshMonitor) | inbound | 1883 (configurable) | **Yes** — `yunohost firewall allow TCP/1883` |
+| ATAK / CoT feed | inbound | 8088 (configurable) | **Yes** — `yunohost firewall allow TCP/8088` |
+
+The MQTT *bridge* and the embedded MQTT *broker* are different features. The bridge — the common case, for uplinking to `mqtt.meshtastic.org` — needs no firewall change at all.
+
+## Known limitations of this package
+
+- **Apprise notifications are not available.** The Docker image and the upstream LXC template provision a Python virtualenv at `/opt/apprise-venv` plus a sidecar Apprise API service; this package does not. Notification targets that route through Apprise will not work.
+- **User scripts do not run.** Upstream resolves script interpreters as `/usr/local/bin/node` and `/opt/apprise-venv/bin/python3` whenever `NODE_ENV=production` and `IS_DESKTOP` is unset — paths that only exist inside the Docker image. Neither exists on a YunoHost install, so the scripting feature fails until this is fixed upstream.
+- **Firmware OTA** shells out to a `meshtastic` CLI that this package does not install.
 
 ## Packaging notes
 

@@ -47,6 +47,8 @@ ynh_config_add --template=".env" --destination="$install_dir/.env"
 chmod 600 "$install_dir/.env"
 chown "$app:$app" "$install_dir/.env"
 
+_meshmonitor_init_data_dir
+
 #=================================================
 # BUILD THE APPLICATION
 #=================================================

@@ -25,8 +25,10 @@ architectures = ["amd64", "arm64"]
 multi_instance = true
 ldap = "false"
 sso = "false"
-# ~1G+ free during the npm build (native modules: bcrypt, better-sqlite3, re2)
-disk = "1G"
+# The install_dir holds a full git clone (+ protobufs/takpacket-sdk submodules), a
+# node_modules with devDependencies (vite/tsc/vitest are needed to build), and the
+# built dist/. node_modules alone is the bulk of it. 1G was not enough.
+disk = "3G"
 ram.build = "2G"
 ram.runtime = "512M"
 
